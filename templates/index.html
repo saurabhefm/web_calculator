@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Web Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin-top: 50px;
+            text-align: center;
+        }
+        input[type="text"] {
+            width: 250px;
+            height: 40px;
+            font-size: 20px;
+            text-align: right;
+        }
+        button {
+            width: 60px;
+            height: 60px;
+            font-size: 20px;
+            margin: 5px;
+        }
+        .result {
+            font-size: 24px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <h2>Working Web Calculator (Frontend with Flask Integration)</h2>
+
+    <input type="text" id="expression" readonly><br><br>
+    <div class="result" id="result">Result: </div><br>
+
+    <div id="buttons"></div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const layout = ['789/', '456*', '123-', '0C=+'];
+            const expressionInput = document.getElementById("expression");
+            const resultDiv = document.getElementById("result");
+
+            let expression = "";
+
+            layout.forEach(row => {
+                const div = document.createElement("div");
+                row.split('').forEach(char => {
+                    const btn = document.createElement("button");
+                    btn.innerText = char;
+                    btn.onclick = () => {
+                        if (char === 'C') {
+                            expression = "";
+                            resultDiv.innerText = "Result: ";
+                        } else if (char === '=') {
+                            // Call Flask server-side evaluation
+                            fetch("/evaluate", {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/json"
+                                },
+                                body: JSON.stringify({ expression })
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                resultDiv.innerText = "Result: " + data.result;
+                                expression = data.result;  // for chaining calculations
+                            })
+                            .catch(() => {
+                                resultDiv.innerText = "Result: Error";
+                            });
+                        } else {
+                            expression += char;
+                        }
+                        expressionInput.value = expression;
+                    };
+                    div.appendChild(btn);
+                });
+                document.getElementById("buttons").appendChild(div);
+            });
+        });
+    </script>
+</body>
+</html>
